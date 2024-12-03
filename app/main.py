@@ -6,6 +6,8 @@ import supervision as sv
 from inference.core.utils.image_utils import load_image_bgr
 import cv2
 from starlette.responses import StreamingResponse
+from ultralytics import YOLO
+import os
 
 app = FastAPI()
 
@@ -22,16 +24,15 @@ async def upload_image(file: UploadFile):
         temp_file_path = temp_file.name
 
     image = load_image_bgr(temp_file_path)
-    model = get_model(model_id="yolov8n-640")
-    results = model.infer(image)[0]
-    results = sv.Detections.from_inference(results)
-    annotator = sv.BoxAnnotator(thickness=4)
-    annotated_image = annotator.annotate(image, results)
-    annotator = sv.LabelAnnotator(text_scale=2, text_thickness=2)
-    annotated_image = annotator.annotate(annotated_image, results)
-    sv.plot_image(annotated_image)
+    model = YOLO(os.getcwd()+'/runs/detect/train6/weights/best.pt')
+    # model = YOLO('yolov8l.pt')
+    results = model(image)[0].plot()
 
-    _, encoded_image = cv2.imencode('.jpg', annotated_image)
+    _, encoded_image = cv2.imencode('.jpg', results)
     image_bytes = BytesIO(encoded_image.tobytes())
 
     return StreamingResponse(image_bytes, media_type="image/jpeg")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
