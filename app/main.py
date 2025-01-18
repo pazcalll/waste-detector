@@ -24,7 +24,7 @@ async def upload_image(file: UploadFile):
         temp_file_path = temp_file.name
 
     image = load_image_bgr(temp_file_path)
-    model = YOLO(os.getcwd()+'/runs/detect/train6/weights/best.pt')
+    model = YOLO(os.getcwd()+'/runs/detect/train5/weights/best.pt')
     # model = YOLO('yolov8l.pt')
     results = model(image)[0].plot()
 
