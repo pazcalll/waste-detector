@@ -25,12 +25,27 @@ async def upload_image(file: UploadFile):
 
     image = load_image_bgr(temp_file_path)
     model = YOLO(os.getcwd()+'/runs/detect/train5/weights/best.pt')
-    # model = YOLO('yolov8l.pt')
+    results = model(image)[0]
+    boxes = results.boxes.cls.numpy()
+    array_of_object = []
+    for i in range(len(boxes)):
+        push: bool = True
+        model_name: str = model.names[int(boxes[i])]
+        for j in range(len(array_of_object)):
+            if array_of_object[j]["name"] == model_name:
+                array_of_object[j]["count"] += 1
+                push = False
+        if push:
+            array_of_object.append({"name": model_name, "count": 1})
+
+    print(array_of_object)
+
     results = model(image)[0].plot()
 
     _, encoded_image = cv2.imencode('.jpg', results)
     image_bytes = BytesIO(encoded_image.tobytes())
 
+    # plastik, kertas, kaca, logam
     return StreamingResponse(image_bytes, media_type="image/jpeg")
 
 if __name__ == "__main__":
